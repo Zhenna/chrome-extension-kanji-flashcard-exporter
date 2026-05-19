@@ -2,6 +2,7 @@
 // Supports Anthropic (claude-sonnet-4) and OpenAI (gpt-4o-mini)
 
 let kanjiData = [];
+let pendingSelection = null;
 let selectedFormat = 'anki';
 let selectedProvider = 'anthropic';
 
@@ -29,6 +30,21 @@ const pageTitleEl = document.getElementById('pageTitle');
 const keyDot = document.getElementById('keyDot');
 const keyStatusEl = document.getElementById('keyStatus');
 
+function updateScanHint(hasSelection) {
+  const hint = document.getElementById('scanHint');
+  if (hasSelection) {
+    hint.textContent = '✓ Selection ready — click Scan to process it';
+    hint.style.background = '#f0fdf4';
+    hint.style.borderColor = '#bbf7d0';
+    hint.style.color = '#166534';
+  } else {
+    hint.textContent = '💡 Right-click highlighted text → Scan selection';
+    hint.style.background = '';
+    hint.style.borderColor = '';
+    hint.style.color = '';
+  }
+}
+
 async function init() {
   const stored = await chrome.storage.local.get(['anthropicKey', 'openaiKey', 'provider']);
   selectedProvider = stored.provider || 'anthropic';
@@ -38,6 +54,14 @@ async function init() {
   updateKeyIndicator(stored);
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab) pageTitleEl.textContent = tab.title || tab.url;
+
+  // Check if opened via context menu with a pending selection
+  const session = await chrome.storage.session.get('pendingSelection');
+  if (session.pendingSelection) {
+    pendingSelection = session.pendingSelection;
+    await chrome.storage.session.remove('pendingSelection');
+    updateScanHint(true);
+  }
 }
 
 function setProviderUI(provider) {
@@ -109,31 +133,45 @@ scanBtn.addEventListener('click', async () => {
   exportSection.classList.remove('visible');
   kanjiData = [];
 
-  showStatus('loading', 'Extracting Japanese text from page...');
+  showStatus('loading', 'Extracting Japanese text...');
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const limit = parseInt(document.getElementById('kanjiLimit').value, 10) || 50;
   let extracted;
-  try {
-    const results = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: extractFromPage });
-    extracted = results[0].result;
-  } catch (err) {
-    showStatus('error', '❌ Cannot access this page. Try a regular webpage.');
-    scanBtn.disabled = false;
-    scanBtnText.textContent = 'Scan Page for Kanji';
-    return;
+
+  if (pendingSelection) {
+    // Use text captured via context menu before popup stole focus
+    const kanjiRegex = /[\u4e00-\u9faf\u3400-\u4dbf][\u4e00-\u9faf\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]{0,5}/g;
+    const allKanji = pendingSelection.match(kanjiRegex) || [];
+    const uniqueKanjiFromSel = [...new Set(allKanji)].slice(0, limit);
+    extracted = { uniqueKanji: uniqueKanjiFromSel, sampleText: pendingSelection.substring(0, 1500), source: 'selection' };
+    pendingSelection = null;
+    updateScanHint(false);
+  } else {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    try {
+      const results = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: extractFromPage });
+      extracted = results[0].result;
+    } catch (err) {
+      showStatus('error', '❌ Cannot access this page. Try a regular webpage.');
+      scanBtn.disabled = false;
+      scanBtnText.textContent = 'Scan Page for Kanji';
+      return;
+    }
   }
 
   if (!extracted || extracted.uniqueKanji.length === 0) {
-    showStatus('error', '❌ No kanji found on this page.');
+    showStatus('error', '❌ No kanji found. Right-click highlighted text and choose "Scan selection", or navigate to a Japanese webpage.');
     scanBtn.disabled = false;
     scanBtnText.textContent = 'Scan Page for Kanji';
     return;
   }
 
-  const limit = parseInt(document.getElementById('kanjiLimit').value, 10) || 50;
-  const uniqueKanji = extracted.uniqueKanji.slice(0, limit);
+  const uniqueKanji = extracted.source === 'selection'
+    ? extracted.uniqueKanji
+    : extracted.uniqueKanji.slice(0, limit);
   const providerLabel = provider === 'openai' ? 'OpenAI' : 'Claude';
-  showStatus('loading', `Found ${uniqueKanji.length} kanji. Asking ${providerLabel} for readings...`);
+  const sourceLabel = extracted.source === 'selection' ? 'selection' : 'page';
+  showStatus('loading', `Found ${uniqueKanji.length} kanji from ${sourceLabel}. Asking ${providerLabel} for readings...`);
 
   resultsSection.classList.add('visible');
   kanjiCount.textContent = `${uniqueKanji.length} kanji`;

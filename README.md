@@ -67,14 +67,34 @@ You need an API key from either Anthropic or OpenAI. Both offer pay-as-you-go pr
 
 ## Usage
 
+### Option A — Scan a selected passage (recommended)
+
+More precise and token-efficient — scans only the text you highlight.
+
+1. Navigate to any Japanese webpage
+2. **Highlight the sentence or paragraph** you want to study
+3. **Right-click** the highlighted text
+4. Select **"🔍 Scan selection for kanji"** from the context menu
+5. The popup opens with a green **"✓ Selection ready"** indicator
+6. Adjust **Max words to scan** if needed (default: 50)
+7. Click **Scan Page for Kanji**
+8. Review the results table (漢字 | Hiragana | English)
+9. Choose your export format and click **Export Flashcards**
+
+> **Why right-click?** Clicking the toolbar icon causes the browser to clear your text selection before the extension can read it. The right-click context menu captures the text first, so the selection is preserved correctly.
+
+---
+
+### Option B — Scan the full page
+
 1. Navigate to any Japanese webpage
    - Try [NHK Web Easy](https://www3.nhk.or.jp/news/easy/) for beginner-friendly news
    - Or any JLPT vocab list, Wikipedia in Japanese, manga sites, etc.
-2. Click the 漢字 extension icon in your toolbar
+2. Click the **漢字 icon** in your Chrome toolbar
 3. Adjust **Max words to scan** if needed (default: 50, max: 200)
 4. Click **Scan Page for Kanji**
 5. Wait ~5–15 seconds for the AI to generate readings
-6. Review the results table (漢字 word | Hiragana | English)
+6. Review the results table (漢字 | Hiragana | English)
 7. Choose your export format and click **Export Flashcards**
 
 ---

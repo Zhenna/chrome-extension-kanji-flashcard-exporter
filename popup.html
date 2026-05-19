@@ -470,6 +470,17 @@
     }
     .key-dot.set { background: var(--success); }
 
+    .scan-hint {
+      font-size: 10px;
+      color: var(--muted);
+      background: var(--paper-dark);
+      border: 1px dashed var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
     .scan-options {
       display: flex;
       align-items: center;
@@ -588,6 +599,7 @@
         <label class="field-label" for="kanjiLimit">Max words to scan</label>
         <input type="number" id="kanjiLimit" class="limit-input" value="50" min="1" max="200" />
       </div>
+      <div class="scan-hint" id="scanHint">💡 Right-click highlighted text → Scan selection</div>
       <button class="scan-btn" id="scanBtn">
         <span class="scan-icon">🔍</span>
         <span id="scanBtnText">Scan Page for Kanji</span>
