@@ -173,6 +173,12 @@ kanji-extension/
 
 ## Changelog
 
+### v1.1.0
+- Added right-click context menu: highlight text → "Scan selection for kanji"
+- Fixed regex to correctly extract kanji compounds and words
+- Fixed character encoding issue in content.js causing console errors
+- Updated status message to show whether scanning selection or full page
+
 ### v1.0.0
 - Initial release
 - Anthropic (Claude) and OpenAI (GPT) support

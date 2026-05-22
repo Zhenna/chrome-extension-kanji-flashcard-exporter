@@ -140,7 +140,7 @@ scanBtn.addEventListener('click', async () => {
 
   if (pendingSelection) {
     // Use text captured via context menu before popup stole focus
-    const kanjiRegex = /[\u4e00-\u9faf\u3400-\u4dbf][\u4e00-\u9faf\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]{0,5}/g;
+    const kanjiRegex = /[\u4e00-\u9faf\u3400-\u4dbf][\u4e00-\u9faf\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]{0,9}/g;
     const allKanji = pendingSelection.match(kanjiRegex) || [];
     const uniqueKanjiFromSel = [...new Set(allKanji)].slice(0, limit);
     extracted = { uniqueKanji: uniqueKanjiFromSel, sampleText: pendingSelection.substring(0, 1500), source: 'selection' };
@@ -194,7 +194,7 @@ scanBtn.addEventListener('click', async () => {
 });
 
 function extractFromPage() {
-  const kanjiRegex = /[\u4e00-\u9faf\u3400-\u4dbf][\u4e00-\u9faf\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]*/g;
+  const kanjiRegex = /[\u4e00-\u9faf\u3400-\u4dbf][\u4e00-\u9faf\u3400-\u4dbf\u3040-\u309f\u30a0-\u30ff]{0,9}/g;
   const japaneseRegex = /[\u3000-\u9fff\uf900-\ufaff\u3040-\u309f\u30a0-\u30ff]/;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
@@ -222,7 +222,12 @@ Kanji: ${kanjiList.join(', ')}
 Reply ONLY with a JSON array, no markdown, no explanation:
 [{"kanji":"字","hiragana":"じ","english":"character"},...]
 
-Rules: one object per kanji, skip punctuation, keep english brief.`;
+Strict rules:
+- One object per input word — do NOT split compounds into individual characters
+- The "kanji" field must match the input word exactly as given
+- Every "kanji" field must contain at least one kanji character — never return pure hiragana or pure katakana
+- Keep english brief (1-4 words)
+- Skip punctuation or non-words`;
 }
 
 async function lookupWithAnthropic(apiKey, kanjiList, context) {
